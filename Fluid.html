@@ -94,18 +94,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 			this.density = density;
 			this.numX = numX + 2; 
 			this.numY = numY + 2;
-			this.numCells = this.numX * this.numY;
-			this.h = h;
-			this.u = new Float32Array(this.numCells);
-			this.v = new Float32Array(this.numCells);
-			this.newU = new Float32Array(this.numCells);
-			this.newV = new Float32Array(this.numCells);
-			this.p = new Float32Array(this.numCells);
-			this.s = new Float32Array(this.numCells);
-			this.m = new Float32Array(this.numCells);
-			this.newM = new Float32Array(this.numCells);
+			this.numCells = this.numX * this.numY; 
+			this.h = h; 									// cell size
+			this.u = new Float32Array(this.numCells);		// x side velocity
+			this.v = new Float32Array(this.numCells);		// y side velocity
+			this.newU = new Float32Array(this.numCells);	// temp x side velocity
+			this.newV = new Float32Array(this.numCells); 	// temp y side velocity
+			this.p = new Float32Array(this.numCells);		// pressure
+			this.s = new Float32Array(this.numCells);		// solid/fluid 1: fluid, 0: solid
+			this.m = new Float32Array(this.numCells);		// smoke density
+			this.newM = new Float32Array(this.numCells);	// temp smoke density
 			this.m.fill(1.0)
-			var num = numX * numY;
+			var num = numX * numY;					// number of cells	왜 따로 놨지?
 		}
 
 		integrate(dt, gravity) {
@@ -120,8 +120,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 		solveIncompressibility(numIters, dt) {
 
-			var n = this.numY;
-			var cp = this.density * this.h / dt;
+			var n = this.numY;								// number of cells in y direction
+			var cp = this.density * this.h / dt; 			// pressure coefficient
 
 			for (var iter = 0; iter < numIters; iter++) {
 
@@ -310,16 +310,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 	var scene = 
 	{
-		gravity : -9.81,
-		dt : 1.0 / 120.0,
-		numIters : 100,
-		frameNr : 0,
-		overRelaxation : 1.9,
-		obstacleX : 0.0,
-		obstacleY : 0.0,
-		obstacleRadius: 0.15,
-		paused: false,
-		sceneNr: 0,
+		gravity : -9.81,  		// gravity
+		dt : 1.0 / 120.0,		// time step
+		numIters : 100,			// number of pressure iterations
+		frameNr : 0,			// frame number
+		overRelaxation : 1.9,	// overrelaxation factor
+		obstacleX : 0.0,		// obstacle position
+		obstacleY : 0.0,		// obstacle position
+		obstacleRadius: 0.15,	// obstacle radius
+		paused: false,			
+		sceneNr: 0,		
 		showObstacle: false,
 		showStreamlines: false,
 		showVelocities: false,	
@@ -335,16 +335,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		scene.overRelaxation = 1.9;
 
 		scene.dt = 1.0 / 60.0;
-		scene.numIters = 40;
+		scene.numIters = 40;									// number of pressure iterations
 
-		var res = 100;
+		var res = 100; 											// resolution						
 		
 		if (sceneNr == 0)
-			res = 50;
+			res = 50;							// tank					
 		else if (sceneNr == 3)
 			res = 200;
 
-		var domainHeight = 1.0;
+		var domainHeight = 1.0;										// domain size									
 		var domainWidth = domainHeight / simHeight * simWidth;
 		var h = domainHeight / res;
 
@@ -375,28 +375,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		}
 		else if (sceneNr == 1 || sceneNr == 3) { // vortex shedding
 
-			var inVel = 2.0;
-			for (var i = 0; i < f.numX; i++) {
-				for (var j = 0; j < f.numY; j++) {
-					var s = 1.0;	// fluid
-					if (i == 0 || j == 0 || j == f.numY-1)
+			var inVel = 2.0;										//initial velocity
+			for (var i = 0; i < f.numX; i++) {						//itertate over all cells
+				for (var j = 0; j < f.numY; j++) {					
+					var s = 1.0;	// fluid					//set fluid
+					if (i == 0 || j == 0 || j == f.numY-1)		//set solid if on boundary
 						s = 0.0;	// solid
-					f.s[i*n + j] = s
+					f.s[i*n + j] = s								//set fluid or solid
 
 					if (i == 1) {
-						f.u[i*n + j] = inVel;
+						f.u[i*n + j] = inVel; 								//set initial velocity
 					}
 				}
 			}
 
-			var pipeH = 0.1 * f.numY;
-			var minJ = Math.floor(0.5 * f.numY - 0.5*pipeH);
+			var pipeH = 0.1 * f.numY;							//pipe height			
+			var minJ = Math.floor(0.5 * f.numY - 0.5*pipeH);			
 			var maxJ = Math.floor(0.5 * f.numY + 0.5*pipeH);
 
-			for (var j = minJ; j < maxJ; j++)
-				f.m[j] = 0.0;
+			for (var j = minJ; j < maxJ; j++)					
+				f.m[j] = 0.0;									//set smoke density
 
-			setObstacle(0.4, 0.5, true)
+			setObstacle(0.4, 0.5, true)							//set obstacle
 
 			scene.gravity = 0.0;
 			scene.showPressure = false;
